@@ -2,47 +2,64 @@
 Database Schemas
 
 Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
 Each Pydantic model represents a collection in your database.
+
 Model name is converted to lowercase for the collection name:
 - User -> "user" collection
 - Product -> "product" collection
-- BlogPost -> "blogs" collection
+- BlogPost -> "blogpost" collection
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, HttpUrl, EmailStr
+from typing import Optional, List
+from datetime import datetime
 
-# Example schemas (replace with your own):
+# -----------------------------
+# Tattoo Artist App Schemas
+# -----------------------------
 
-class User(BaseModel):
+class TattooProduct(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
-
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
+    Products the artist sells (prints, merch, vouchers)
+    Collection name: "tattooproduct"
     """
     title: str = Field(..., description="Product title")
     description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
+    price: float = Field(..., ge=0, description="Price in EUR")
+    image_url: Optional[HttpUrl] = Field(None, description="Primary product image URL")
+    category: str = Field(..., description="Category such as prints, merch, voucher")
     in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Review(BaseModel):
+    """
+    Client reviews for the artist
+    Collection name: "review"
+    """
+    name: str = Field(..., description="Reviewer name")
+    rating: int = Field(..., ge=1, le=5, description="Star rating 1-5")
+    comment: str = Field(..., description="Review text")
+    avatar_url: Optional[HttpUrl] = Field(None, description="Avatar image URL")
+    created_at: Optional[datetime] = Field(None, description="Creation timestamp")
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class GalleryItem(BaseModel):
+    """
+    Portfolio gallery items (healed tattoos, flashes, sketches)
+    Collection name: "galleryitem"
+    """
+    image_url: HttpUrl = Field(..., description="Image URL")
+    title: Optional[str] = Field(None, description="Title or short caption")
+    tags: List[str] = Field(default_factory=list, description="Tags like blackwork, neo-trad")
+
+class ContactMessage(BaseModel):
+    """
+    Contact/inquiry messages from the website
+    Collection name: "contactmessage"
+    """
+    name: str = Field(..., description="Sender name")
+    email: EmailStr = Field(..., description="Contact email")
+    phone: Optional[str] = Field(None, description="Phone or WhatsApp")
+    subject: Optional[str] = Field(None, description="Subject line")
+    message: str = Field(..., description="Message body")
+    consent: bool = Field(True, description="Consent to be contacted")
+
+# Note: The Flames database viewer can read these via GET /schema
